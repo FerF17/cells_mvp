@@ -278,16 +278,29 @@ def monthly(df, value=None, agg="count"):
 #  6 · REPORTE PDF  (reportlab + matplotlib, sin dependencias de binarios)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _mpl_bar(data_x, data_y, title, color, horizontal=False):
+def _mpl_bar(data_x, data_y, title, color, horizontal=False, xlabel="", ylabel=""):
     fig, ax = plt.subplots(figsize=(5.2, 2.6), dpi=130)
+    data_x = list(data_x); data_y = list(data_y)
     if horizontal:
-        ax.barh(data_x, data_y, color=color)
+        bars = ax.barh(data_x, data_y, color=color)
         ax.invert_yaxis()
+        for bar, v in zip(bars, data_y):
+            ax.text(v + max(data_y) * 0.02, bar.get_y() + bar.get_height() / 2,
+                    f"{v:,.0f}", va="center", ha="left", fontsize=6.5, fontweight="bold",
+                    color=BRAND["ink"])
+        ax.set_xlabel(xlabel or "Valor", fontsize=7)
     else:
-        ax.bar(data_x, data_y, color=color)
+        bars = ax.bar(data_x, data_y, color=color)
+        for bar, v in zip(bars, data_y):
+            ax.text(bar.get_x() + bar.get_width() / 2, v + max(data_y) * 0.02,
+                    f"{v:,.0f}", ha="center", va="bottom", fontsize=6.5, fontweight="bold",
+                    color=BRAND["ink"])
         plt.xticks(rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel(xlabel, fontsize=7)
+        ax.set_ylabel(ylabel or "Valor", fontsize=7)
     ax.set_title(title, fontsize=9, fontweight="bold", color=BRAND["ink"])
     ax.tick_params(labelsize=7)
+    ax.set_ylim(0, max(data_y) * 1.18) if not horizontal else None
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
     fig.tight_layout()
@@ -502,8 +515,10 @@ def page_overview(rango):
     st.dataframe(salud, use_container_width=True, hide_index=True)
 
     charts = [
-        _mpl_bar(vol["Línea"], vol["Operaciones"], "Volumen por línea", BRAND["primary"]),
-        _mpl_bar([d.strftime("%b'%y") for d in mv["periodo"]], mv["valor"], "Ingresos/mes", BRAND["secondary"]),
+        _mpl_bar(vol["Línea"], vol["Operaciones"], "Volumen por línea", BRAND["primary"],
+                 ylabel="Operaciones"),
+        _mpl_bar([d.strftime("%b'%y") for d in mv["periodo"]], mv["valor"], "Ingresos/mes", BRAND["secondary"],
+                 xlabel="Mes", ylabel="USD"),
     ]
     _d = delta_pct(ingreso_cur, ingreso_prev)
     kpis = [("Ingresos cobrados", fmt_money(ingreso_cur), f"{_d:+.1f}%" if _d is not None else ""),
@@ -584,13 +599,16 @@ def page_diagnostico(rango):
                      use_container_width=True, hide_index=True)
 
     charts = [
-        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Pruebas/mes", BRAND["primary"]),
-        _mpl_bar(top["prueba"], top["n"], "Top pruebas", BRAND["secondary"], horizontal=True),
+        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Pruebas/mes", BRAND["primary"],
+                 xlabel="Mes", ylabel="Pruebas"),
+        _mpl_bar(top["prueba"], top["n"], "Top pruebas", BRAND["secondary"], horizontal=True,
+                 xlabel="Cantidad"),
     ]
-    kpis = [("Pruebas", fmt_int(vol), f"{delta_pct(vol, vol_p):+.1f}%" if delta_pct(vol, vol_p) is not None else ""),
+    _dv = delta_pct(vol, vol_p); _dt = delta_pct(t_proc, t_proc_p); _dr = delta_pct(repet, repet_p)
+    kpis = [("Pruebas", fmt_int(vol), f"{_dv:+.1f}%" if _dv is not None else ""),
             ("Positividad", fmt_pct(pos), ""),
-            ("Tiempo proceso (h)", f"{t_proc:.1f}", ""),
-            ("Tasa repetición", fmt_pct(repet), ""),
+            ("Tiempo proceso (h)", f"{t_proc:.1f}", f"{_dt:+.1f}%" if _dt is not None else ""),
+            ("Tasa repetición", fmt_pct(repet), f"{_dr:+.1f}%" if _dr is not None else ""),
             ("Costo medio", fmt_money(costo), "")]
     report_controls("diagnostico", "Diagnóstico Molecular", periodo_txt, kpis, alertas, charts)
 
@@ -661,11 +679,16 @@ def page_cultivo(rango):
                      use_container_width=True, hide_index=True)
 
     charts = [
-        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Cultivos/mes", BRAND["primary"]),
-        _mpl_bar(cb["tipo_reactor"], cb["contam"], "% contaminación x reactor", BRAND["bad"]),
+        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Cultivos/mes", BRAND["primary"],
+                 xlabel="Mes", ylabel="Cultivos"),
+        _mpl_bar(cb["tipo_reactor"], cb["contam"], "% contaminación x reactor", BRAND["bad"],
+                 xlabel="Biorreactor", ylabel="% Contaminación"),
     ]
-    kpis = [("Cultivos", fmt_int(vol), ""), ("Tasa éxito", fmt_pct(exito), ""),
-            ("Viabilidad media", fmt_pct(viab), ""), ("Contaminación", fmt_pct(contam), ""),
+    _dv = delta_pct(vol, vol_p); _de = delta_pct(exito, exito_p); _dc = delta_pct(contam, contam_p)
+    kpis = [("Cultivos", fmt_int(vol), f"{_dv:+.1f}%" if _dv is not None else ""),
+            ("Tasa éxito", fmt_pct(exito), f"{_de:+.1f}%" if _de is not None else ""),
+            ("Viabilidad media", fmt_pct(viab), ""),
+            ("Contaminación", fmt_pct(contam), f"{_dc:+.1f}%" if _dc is not None else ""),
             ("Rendimiento (mg)", f"{rend:.1f}" if not pd.isna(rend) else "—", "")]
     report_controls("cultivo", "Cultivo Celular", periodo_txt, kpis, alertas, charts)
 
@@ -737,12 +760,17 @@ def page_bio(rango):
                      use_container_width=True, hide_index=True)
 
     charts = [
-        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Análisis/mes", BRAND["primary"]),
-        _mpl_bar(cp["pipeline"], cp["costo_computo_usd"], "Costo x pipeline", BRAND["accent"], horizontal=True),
+        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Análisis/mes", BRAND["primary"],
+                 xlabel="Mes", ylabel="Análisis"),
+        _mpl_bar(cp["pipeline"], cp["costo_computo_usd"], "Costo x pipeline", BRAND["accent"], horizontal=True,
+                 xlabel="USD"),
     ]
-    kpis = [("Análisis", fmt_int(vol), ""), ("Completados", fmt_pct(compl), ""),
-            ("Tiempo cómputo (min)", f"{t_comp:.0f}", ""), ("Q30 medio", fmt_pct(q30), ""),
-            ("Costo cómputo", fmt_money(costo_tot), "")]
+    _dv = delta_pct(vol, vol_p); _dct = delta_pct(costo_tot, costo_tot_p)
+    kpis = [("Análisis", fmt_int(vol), f"{_dv:+.1f}%" if _dv is not None else ""),
+            ("Completados", fmt_pct(compl), ""),
+            ("Tiempo cómputo (min)", f"{t_comp:.0f}", ""),
+            ("Q30 medio", fmt_pct(q30), ""),
+            ("Costo cómputo", fmt_money(costo_tot), f"{_dct:+.1f}%" if _dct is not None else "")]
     report_controls("bio", "Bioinformática / Análisis", periodo_txt, kpis, alertas, charts)
 
 
@@ -825,12 +853,17 @@ def page_ventas(rango):
                      use_container_width=True, hide_index=True)
 
     charts = [
-        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Ingresos/mes", BRAND["primary"]),
-        _mpl_bar(pais["pais"], pais["total_usd"], "Ingresos por país", BRAND["secondary"]),
+        _mpl_bar([d.strftime("%b'%y") for d in m["periodo"]], m["valor"], "Ingresos/mes", BRAND["primary"],
+                 xlabel="Mes", ylabel="USD"),
+        _mpl_bar(pais["pais"], pais["total_usd"], "Ingresos por país", BRAND["secondary"],
+                 xlabel="País", ylabel="USD"),
     ]
-    kpis = [("Ingresos cobrados", fmt_money(ingreso), f"{delta_pct(ingreso, ingreso_p):+.1f}%" if delta_pct(ingreso, ingreso_p) is not None else ""),
-            ("Órdenes", fmt_int(n_ord), ""), ("Ticket medio", fmt_money(ticket), ""),
-            ("Tasa cancelación", fmt_pct(cancel), ""), ("Descuento medio", fmt_pct(desc), "")]
+    _di = delta_pct(ingreso, ingreso_p); _dn = delta_pct(n_ord, n_ord_p); _dc = delta_pct(cancel, cancel_p)
+    kpis = [("Ingresos cobrados", fmt_money(ingreso), f"{_di:+.1f}%" if _di is not None else ""),
+            ("Órdenes", fmt_int(n_ord), f"{_dn:+.1f}%" if _dn is not None else ""),
+            ("Ticket medio", fmt_money(ticket), ""),
+            ("Tasa cancelación", fmt_pct(cancel), f"{_dc:+.1f}%" if _dc is not None else ""),
+            ("Descuento medio", fmt_pct(desc), "")]
     report_controls("ventas", "Ventas / Clientes", periodo_txt, kpis, alertas, charts)
 
 
