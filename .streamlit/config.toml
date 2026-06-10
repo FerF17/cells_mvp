@@ -1,0 +1,12 @@
+mkdir -p .streamlit
+cat > .streamlit/config.toml << 'CONFIG'
+[theme]
+primaryColor = "#0EA5A4"
+backgroundColor = "#FBFCFE"
+secondaryBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"
+font = "sans serif"
+
+[client]
+showErrorDetails = false
+CONFIG
