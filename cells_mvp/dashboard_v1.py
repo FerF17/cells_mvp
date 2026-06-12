@@ -82,32 +82,36 @@ PLOTLY_TEMPLATE = "plotly_white"
 def inject_css():
     st.markdown(f"""
     <style>
+      .stApp {{ background: {BRAND['bg_soft']} !important; color: {BRAND['ink']} !important; }}
       .block-container {{ padding-top: 1.4rem; padding-bottom: 3rem; max-width: 1500px; }}
-      h1, h2, h3 {{ letter-spacing: -0.02em; }}
+      h1, h2, h3 {{ color: {BRAND['ink']} !important; letter-spacing: -0.02em; }}
+      p, span, label, div {{ color: {BRAND['ink']}; }}
       .hero {{
         background: linear-gradient(120deg, {BRAND['primary']}22, {BRAND['secondary']}18);
         border: 1px solid {BRAND['primary']}44; border-radius: 18px;
         padding: 20px 26px; margin-bottom: 14px;
       }}
-      .hero h1 {{ margin: 0; font-size: 1.7rem; }}
-      .hero p  {{ margin: 4px 0 0; font-size: .95rem; opacity: 0.72; }}
+      .hero h1 {{ margin: 0; font-size: 1.7rem; color: {BRAND['ink']} !important; }}
+      .hero p  {{ margin: 4px 0 0; color: {BRAND['muted']} !important; font-size: .95rem; }}
       .exec-summary {{
-        background: var(--secondary-background-color);
-        border-left: 5px solid {BRAND['primary']};
+        background: #FFFFFF; border-left: 5px solid {BRAND['primary']};
         border-radius: 10px; padding: 14px 18px; margin: 6px 0 18px;
         box-shadow: 0 1px 3px rgba(15,23,42,.08); font-size: .96rem; line-height: 1.55;
+        color: {BRAND['ink']} !important;
       }}
-      .alert {{ border-radius: 10px; padding: 11px 15px; margin: 6px 0; font-size: .9rem; }}
-      .alert-bad  {{ background: {BRAND['bad']}30;  border-left: 4px solid {BRAND['bad']};  }}
-      .alert-warn {{ background: {BRAND['warn']}30; border-left: 4px solid {BRAND['warn']}; }}
-      .alert-ok   {{ background: {BRAND['ok']}30;   border-left: 4px solid {BRAND['ok']};   }}
+      .alert {{ border-radius: 10px; padding: 11px 15px; margin: 6px 0; font-size: .9rem; color: {BRAND['ink']} !important; }}
+      .alert-bad  {{ background: {BRAND['bad']}28;  border-left: 4px solid {BRAND['bad']};  }}
+      .alert-warn {{ background: {BRAND['warn']}28; border-left: 4px solid {BRAND['warn']}; }}
+      .alert-ok   {{ background: {BRAND['ok']}28;   border-left: 4px solid {BRAND['ok']};   }}
       div[data-testid="stMetric"] {{
-        background: var(--secondary-background-color);
-        border: 1px solid rgba(128,128,128,0.2); border-radius: 14px;
-        padding: 14px 16px; box-shadow: 0 1px 2px rgba(15,23,42,.05);
+        background: #FFFFFF !important; border: 1px solid #E2E8F0 !important;
+        border-radius: 14px; padding: 14px 16px !important;
+        box-shadow: 0 1px 2px rgba(15,23,42,.05);
       }}
-      div[data-testid="stMetricLabel"] {{ font-weight: 600; opacity: 0.75; }}
-      section[data-testid="stSidebar"] {{ background: {BRAND['ink']}; }}
+      div[data-testid="stMetric"] * {{ color: {BRAND['ink']} !important; }}
+      div[data-testid="stMetricLabel"] {{ color: {BRAND['muted']} !important; font-weight: 600; }}
+      div[data-testid="stMetricValue"] {{ color: {BRAND['ink']} !important; font-weight: 700; }}
+      section[data-testid="stSidebar"] {{ background: {BRAND['ink']} !important; }}
       section[data-testid="stSidebar"] * {{ color: #E2E8F0 !important; }}
       section[data-testid="stSidebar"] .stRadio label {{ font-size: .95rem; }}
     </style>
